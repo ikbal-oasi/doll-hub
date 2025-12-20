@@ -1,4 +1,4 @@
--- Doll Hub UI Base (Fixed & Lightweight)
+-- PROFFT Hub UI Base (Fixed & Lightweight)
 
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
@@ -126,3 +126,4 @@ Toggle.MouseButton1Click:Connect(function()
         and Color3.fromRGB(255, 90, 90)
         or Color3.fromRGB(40, 40, 40)
 end)
+
