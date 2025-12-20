@@ -1,46 +1,136 @@
--- Doll Hub UI (Base)
+-- Doll Hub UI Base (Lightweight)
 
-if game:GetService("CoreGui"):FindFirstChild("DollHub") then
-    game:GetService("CoreGui"):FindFirstChild("DollHub"):Destroy()
+local CoreGui = game:GetService("CoreGui")
+if CoreGui:FindFirstChild("DollHub") then
+    CoreGui.DollHub:Destroy()
 end
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "DollHub"
-ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.Parent = CoreGui
 
-local Frame = Instance.new("Frame")
-Frame.Parent = ScreenGui
-Frame.Size = UDim2.new(0, 350, 0, 220)
-Frame.Position = UDim2.new(0.5, -175, 0.5, -110)
-Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Frame.Active = true
-Frame.Draggable = true
+-- Services
+local TweenService = game:GetService("TweenService")
 
-local UICorner = Instance.new("UICorner", Frame)
-UICorner.CornerRadius = UDim.new(0, 12)
+-- Icon Toggle Button
+local IconBtn = Instance.new("ImageButton")
+IconBtn.Parent = ScreenGui
+IconBtn.Size = UDim2.new(0, 50, 0, 50)
+IconBtn.Position = UDim2.new(0, 20, 0.5, -25)
+IconBtn.BackgroundColor3 = Color3.fromRGB(255, 90, 90)
+IconBtn.Image = "rbxassetid://7733960981" -- icon (bisa diganti)
+IconBtn.Active = true
+IconBtn.Draggable = true
+IconBtn.AutoButtonColor = true
 
-local Title = Instance.new("TextLabel")
-Title.Parent = Frame
-Title.Size = UDim2.new(1, 0, 0, 40)
+Instance.new("UICorner", IconBtn).CornerRadius = UDim.new(1, 0)
+
+-- Toggle Logic
+ToggleBtn.MouseButton1Click:Connect(function()
+    Main.Visible = not Main.Visible
+end)
+
+-- Main Frame
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.new(0, 600, 0, 360)
+Main.Position = UDim2.new(0.5, -300, 0.5, -180)
+Main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Main.Active = true
+Main.Draggable = true
+
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
+
+-- Sidebar
+local Sidebar = Instance.new("Frame", Main)
+Sidebar.Size = UDim2.new(0, 150, 1, 0)
+Sidebar.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 12)
+
+-- Title
+local Title = Instance.new("TextLabel", Sidebar)
+Title.Size = UDim2.new(1, 0, 0, 50)
 Title.BackgroundTransparency = 1
 Title.Text = "DOLL HUB"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextColor3 = Color3.fromRGB(255, 120, 120)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 20
+Title.TextSize = 18
 
-local Button = Instance.new("TextButton")
-Button.Parent = Frame
-Button.Size = UDim2.new(0.8, 0, 0, 45)
-Button.Position = UDim2.new(0.1, 0, 0.5, 0)
-Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-Button.Text = "TEST BUTTON"
-Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-Button.Font = Enum.Font.Gotham
-Button.TextSize = 16
+-- Content
+local Content = Instance.new("Frame", Main)
+Content.Position = UDim2.new(0, 150, 0, 0)
+Content.Size = UDim2.new(1, -150, 1, 0)
+Content.BackgroundTransparency = 1
 
-local UICorner2 = Instance.new("UICorner", Button)
-UICorner2.CornerRadius = UDim.new(0, 10)
+-- Section
+local Section = Instance.new("Frame", Content)
+Section.Size = UDim2.new(0, 400, 0, 200)
+Section.Position = UDim2.new(0, 20, 0, 20)
+Section.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Instance.new("UICorner", Section).CornerRadius = UDim.new(0, 10)
 
-Button.MouseButton1Click:Connect(function()
-    Button.Text = "Clicked!"
+local SectionTitle = Instance.new("TextLabel", Section)
+SectionTitle.Size = UDim2.new(1, -20, 0, 40)
+SectionTitle.Position = UDim2.new(0, 10, 0, 0)
+SectionTitle.BackgroundTransparency = 1
+SectionTitle.Text = "Main Feature"
+SectionTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+SectionTitle.Font = Enum.Font.GothamBold
+SectionTitle.TextSize = 16
+SectionTitle.TextXAlignment = Left
+
+-- Toggle Button
+local Toggle = Instance.new("TextButton", Section)
+Toggle.Size = UDim2.new(0, 160, 0, 40)
+Toggle.Position = UDim2.new(0, 20, 0, 60)
+Toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Toggle.Text = "Enable Feature: OFF"
+Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+Toggle.Font = Enum.Font.Gotham
+Toggle.TextSize = 14
+Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0, 8)
+
+-- Animation Settings
+local open = true
+local openPos = Main.Position
+local closePos = openPos + UDim2.new(0, 0, 0, 40)
+
+Main.BackgroundTransparency = 0
+
+local function OpenUI()
+    Main.Visible = true
+    TweenService:Create(
+        Main,
+        TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {Position = openPos, BackgroundTransparency = 0}
+    ):Play()
+end
+
+local function CloseUI()
+    local tween = TweenService:Create(
+        Main,
+        TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+        {Position = closePos, BackgroundTransparency = 0.15}
+    )
+    tween:Play()
+    tween.Completed:Wait()
+    Main.Visible = false
+end
+
+IconBtn.MouseButton1Click:Connect(function()
+    open = not open
+    if open then
+        OpenUI()
+    else
+        CloseUI()
+    end
 end)
+
+local enabled = false
+Toggle.MouseButton1Click:Connect(function()
+    enabled = not enabled
+    Toggle.Text = enabled and "Enable Feature: ON" or "Enable Feature: OFF"
+    Toggle.BackgroundColor3 = enabled 
+        and Color3.fromRGB(255, 90, 90) 
+        or Color3.fromRGB(40, 40, 40)
+end)
+
