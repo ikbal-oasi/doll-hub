@@ -1,174 +1,245 @@
--- STS Hub | Chiyo-style UI Framework
+-- ECH HUB - FULL AUTO MINING + UI (FINAL)
 
-local CoreGui = game:GetService("CoreGui")
+------------------------------------------------
+-- SERVICES
+------------------------------------------------
+local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local CollectionService = game:GetService("CollectionService")
+local player = Players.LocalPlayer
 
-if CoreGui:FindFirstChild("DollHub") then
-    CoreGui.DollHub:Destroy()
+------------------------------------------------
+-- CHARACTER
+------------------------------------------------
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+------------------------------------------------
+-- STATE
+------------------------------------------------
+local AutoMining = false
+local SelectedRockName = nil
+local UseTeleport = false
+local SkipUsedRock = true
+local MoveSpeed = 160
+
+------------------------------------------------
+-- FLOATING BUTTON
+------------------------------------------------
+local toggleGui = Instance.new("ScreenGui", player.PlayerGui)
+toggleGui.Name = "ECHToggle"
+toggleGui.ResetOnSpawn = false
+
+local toggleBtn = Instance.new("TextButton", toggleGui)
+toggleBtn.Size = UDim2.new(0,54,0,54)
+toggleBtn.Position = UDim2.new(0,20,0.5,-27)
+toggleBtn.Text = "C"
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 22
+toggleBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+toggleBtn.TextColor3 = Color3.fromRGB(255,160,160)
+Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1,0)
+
+------------------------------------------------
+-- MAIN UI
+------------------------------------------------
+local gui = Instance.new("ScreenGui", player.PlayerGui)
+gui.Name = "ECHHubUI"
+gui.Enabled = false
+gui.ResetOnSpawn = false
+
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0,520,0,340)
+main.Position = UDim2.new(0.5,-260,0.5,-170)
+main.BackgroundColor3 = Color3.fromRGB(20,20,20)
+Instance.new("UICorner", main).CornerRadius = UDim.new(0,10)
+
+local closeBtn = Instance.new("TextButton", main)
+closeBtn.Size = UDim2.new(0,26,0,26)
+closeBtn.Position = UDim2.new(1,-30,0,6)
+closeBtn.Text = "✕"
+closeBtn.TextSize = 14
+closeBtn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+Instance.new("UICorner", closeBtn)
+
+local content = Instance.new("Frame", main)
+content.Position = UDim2.new(0,20,0,40)
+content.Size = UDim2.new(1,-40,1,-60)
+content.BackgroundColor3 = Color3.fromRGB(18,18,18)
+Instance.new("UICorner", content).CornerRadius = UDim.new(0,8)
+
+------------------------------------------------
+-- UI BUTTON MAKER
+------------------------------------------------
+local function makeBtn(txt,y)
+	local b = Instance.new("TextButton", content)
+	b.Size = UDim2.new(0,220,0,32)
+	b.Position = UDim2.new(0,20,0,y)
+	b.Text = txt
+	b.Font = Enum.Font.Gotham
+	b.TextSize = 12
+	b.BackgroundColor3 = Color3.fromRGB(38,38,38)
+	b.TextColor3 = Color3.fromRGB(220,220,220)
+	Instance.new("UICorner", b)
+	return b
 end
 
-local UI = Instance.new("ScreenGui", CoreGui)
-UI.Name = "DollHub"
+local autoBtn = makeBtn("Auto Mining : OFF",10)
+local modeBtn = makeBtn("Mode : STEALTH",52)
+local skipBtn = makeBtn("Skip Used Rock : ON",94)
+local speedBtn = makeBtn("Speed : 160",136)
 
--- ================= ICON TOGGLE =================
-local Icon = Instance.new("ImageButton", UI)
-Icon.Size = UDim2.new(0,50,0,50)
-Icon.Position = UDim2.new(0,20,0.5,-25)
-Icon.Image = "rbxassetid://ASSET_ID_HERE"
-Icon.BackgroundColor3 = Color3.fromRGB(0,0,0)
-Icon.BackgroundTransparency = .2
-Icon.Active, Icon.Draggable = true, true
-Instance.new("UICorner",Icon).CornerRadius = UDim.new(1,0)
+------------------------------------------------
+-- ROCK LIST (MENU NAME = rock)
+------------------------------------------------
+local rockFrame = Instance.new("Frame", content)
+rockFrame.Name = "rock"
+rockFrame.Size = UDim2.new(0,220,0,140)
+rockFrame.Position = UDim2.new(0,20,0,178)
+rockFrame.BackgroundColor3 = Color3.fromRGB(28,28,28)
+Instance.new("UICorner", rockFrame)
 
--- ================= MAIN =================
-local Main = Instance.new("Frame", UI)
-Main.Size = UDim2.new(0,650,0,380)
-Main.Position = UDim2.new(.5,-325,.5,-190)
-Main.BackgroundColor3 = Color3.fromRGB(18,18,18)
-Main.Active, Main.Draggable = true, true
-Instance.new("UICorner",Main).CornerRadius = UDim.new(0,12)
+local title = Instance.new("TextLabel", rockFrame)
+title.Size = UDim2.new(1,0,0,22)
+title.Text = "ROCK"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 12
+title.TextColor3 = Color3.fromRGB(200,200,200)
+title.BackgroundTransparency = 1
 
--- Sidebar
-local Sidebar = Instance.new("Frame", Main)
-Sidebar.Size = UDim2.new(0,160,1,0)
-Sidebar.BackgroundColor3 = Color3.fromRGB(14,14,14)
-Instance.new("UICorner",Sidebar).CornerRadius = UDim.new(0,12)
+local list = Instance.new("ScrollingFrame", rockFrame)
+list.Position = UDim2.new(0,4,0,24)
+list.Size = UDim2.new(1,-8,1,-26)
+list.CanvasSize = UDim2.new(0,0,0,0)
+list.ScrollBarImageTransparency = 0.4
+list.BackgroundTransparency = 1
 
--- Content
-local Pages = Instance.new("Folder", Main)
-Pages.Name = "Pages"
+local layout = Instance.new("UIListLayout", list)
+layout.Padding = UDim.new(0,4)
 
--- ================= UI MAKERS =================
-local function CreatePage(name)
-    local p = Instance.new("Frame", Pages)
-    p.Name = name
-    p.Position = UDim2.new(0,160,0,0)
-    p.Size = UDim2.new(1,-160,1,0)
-    p.BackgroundTransparency = 1
-    p.Visible = false
-    return p
+local RockList = {
+	"Basalt Core","Basalt Rock","Basalt Vein","Boulder",
+	"Crimson Crystal","Cyan Crystal","Earth Crystal",
+	"Light Crystal","Lucky Block","Pebble","Rock",
+	"Violet Crystal","Volcanic Rock"
+}
+
+for _,name in ipairs(RockList) do
+	local b = Instance.new("TextButton", list)
+	b.Size = UDim2.new(1,0,0,22)
+	b.Text = name
+	b.Font = Enum.Font.Gotham
+	b.TextSize = 11
+	b.BackgroundColor3 = Color3.fromRGB(40,40,40)
+	b.TextColor3 = Color3.fromRGB(220,220,220)
+	Instance.new("UICorner", b)
+	b.MouseButton1Click:Connect(function()
+		SelectedRockName = name
+		autoBtn.Text = "Target : "..name
+	end)
 end
 
-local function CreateTab(text, order, page)
-    local b = Instance.new("TextButton", Sidebar)
-    b.Size = UDim2.new(1,-20,0,36)
-    b.Position = UDim2.new(0,10,0,60+(order*40))
-    b.Text = text
-    b.Font = Enum.Font.Gotham
-    b.TextSize = 14
-    b.TextColor3 = Color3.new(1,1,1)
-    b.BackgroundColor3 = Color3.fromRGB(25,25,25)
-    Instance.new("UICorner",b).CornerRadius = UDim.new(0,8)
+task.wait()
+list.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y)
 
-    b.MouseButton1Click:Connect(function()
-        for _,v in pairs(Pages:GetChildren()) do v.Visible = false end
-        page.Visible = true
-    end)
+------------------------------------------------
+-- UI TOGGLE
+------------------------------------------------
+local opened = false
+toggleBtn.MouseButton1Click:Connect(function()
+	opened = not opened
+	gui.Enabled = opened
+end)
+closeBtn.MouseButton1Click:Connect(function()
+	gui.Enabled = false
+	opened = false
+end)
+
+------------------------------------------------
+-- BUTTON LOGIC
+------------------------------------------------
+autoBtn.MouseButton1Click:Connect(function()
+	AutoMining = not AutoMining
+	autoBtn.Text = AutoMining and "Auto Mining : ON" or "Auto Mining : OFF"
+end)
+
+modeBtn.MouseButton1Click:Connect(function()
+	UseTeleport = not UseTeleport
+	modeBtn.Text = UseTeleport and "Mode : TELEPORT" or "Mode : STEALTH"
+end)
+
+skipBtn.MouseButton1Click:Connect(function()
+	SkipUsedRock = not SkipUsedRock
+	skipBtn.Text = SkipUsedRock and "Skip Used Rock : ON" or "Skip Used Rock : OFF"
+end)
+
+speedBtn.MouseButton1Click:Connect(function()
+	MoveSpeed += 40
+	if MoveSpeed > 280 then MoveSpeed = 80 end
+	speedBtn.Text = "Speed : "..MoveSpeed
+end)
+
+------------------------------------------------
+-- CORE LOGIC
+------------------------------------------------
+local function validRock(r)
+	if not r or not r.Parent then return false end
+	if SkipUsedRock and (r.Transparency > 0.3 or not r.CanCollide) then
+		return false
+	end
+	return true
 end
 
-local function Section(parent, title, y)
-    local s = Instance.new("Frame", parent)
-    s.Size = UDim2.new(0,420,0,200)
-    s.Position = UDim2.new(0,20,0,y)
-    s.BackgroundColor3 = Color3.fromRGB(25,25,25)
-    Instance.new("UICorner",s).CornerRadius = UDim.new(0,10)
-
-    local t = Instance.new("TextLabel", s)
-    t.Text = title
-    t.Size = UDim2.new(1,-20,0,40)
-    t.Position = UDim2.new(0,10,0,0)
-    t.BackgroundTransparency = 1
-    t.Font = Enum.Font.GothamBold
-    t.TextSize = 16
-    t.TextXAlignment = Enum.TextXAlignment.Left
-    t.TextColor3 = Color3.new(1,1,1)
-
-    return s
+local function getRock()
+	local best, dist = nil, math.huge
+	for _,r in ipairs(CollectionService:GetTagged("Rock")) do
+		if r:IsA("BasePart") and r.Name == SelectedRockName and validRock(r) then
+			local d = (r.Position - hrp.Position).Magnitude
+			if d < dist then
+				best, dist = r, d
+			end
+		end
+	end
+	return best
 end
 
-local function Toggle(parent, text, y, callback)
-    local b = Instance.new("TextButton", parent)
-    b.Size = UDim2.new(0,180,0,36)
-    b.Position = UDim2.new(0,20,0,y)
-    b.Text = text.." : OFF"
-    b.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    b.TextColor3 = Color3.new(1,1,1)
-    Instance.new("UICorner",b).CornerRadius = UDim.new(0,8)
-
-    local state = false
-    b.MouseButton1Click:Connect(function()
-        state = not state
-        b.Text = text.." : "..(state and "ON" or "OFF")
-        b.BackgroundColor3 = state and Color3.fromRGB(255,90,90) or Color3.fromRGB(40,40,40)
-        callback(state)
-    end)
+local function moveTo(pos)
+	if UseTeleport then
+		hrp.CFrame = CFrame.new(pos)
+	else
+		local d = (hrp.Position - pos).Magnitude
+		local t = TweenService:Create(
+			hrp,
+			TweenInfo.new(d / MoveSpeed, Enum.EasingStyle.Linear),
+			{CFrame = CFrame.new(pos)}
+		)
+		t:Play()
+		t.Completed:Wait()
+	end
 end
 
--- ================= PAGES =================
-local MainPage = CreatePage("Main")
-local Quest = CreatePage("Quest")
-local Upgrade = CreatePage("Upgrade")
-local Selling = CreatePage("Selling")
-local Shop = CreatePage("Shop")
-local Webhook = CreatePage("Webhook")
-local Player = CreatePage("Player")
-local Settings = CreatePage("Settings")
+local function hitRock(r)
+	local tool = char:FindFirstChildOfClass("Tool")
+	if tool then
+		for _=1,8 do
+			if not r.Parent then break end
+			tool:Activate()
+			task.wait(0.12)
+		end
+	end
+end
 
-MainPage.Visible = true
-
--- ================= TABS =================
-CreateTab("Main",0,MainPage)
-CreateTab("Quest",1,Quest)
-CreateTab("Upgrade",2,Upgrade)
-CreateTab("Selling",3,Selling)
-CreateTab("Shop",4,Shop)
-CreateTab("Webhook",5,Webhook)
-CreateTab("Player",6,Player)
-CreateTab("Settings",7,Settings)
-
--- ================= MAIN FEATURES =================
-local sec = Section(MainPage,"Farming",20)
-
-Toggle(sec,"Auto Farm",50,function(v)
-    -- TODO: Auto Farm logic
-end)
-
-Toggle(sec,"Auto Claim",90,function(v)
-    -- TODO
-end)
-
-Toggle(sec,"Auto Code",130,function(v)
-    -- TODO
-end)
-
--- ================= PLAYER =================
-local psec = Section(Player,"Movement",20)
-
-Toggle(psec,"Fly",50,function(v)
-    -- TODO Fly
-end)
-
-Toggle(psec,"No Clip",90,function(v)
-    -- TODO
-end)
-
--- ================= ICON ANIM =================
-local open = true
-local openPos = Main.Position
-local closePos = openPos + UDim2.new(0,0,0,60)
-
-Icon.MouseButton1Click:Connect(function()
-    open = not open
-    local t = TweenService:Create(
-        Main,
-        TweenInfo.new(.25),
-        {Position = open and openPos or closePos}
-    )
-    t:Play()
-    if not open then
-        t.Completed:Wait()
-        Main.Visible = false
-    else
-        Main.Visible = true
-    end
+------------------------------------------------
+-- MAIN LOOP (NONSTOP)
+------------------------------------------------
+task.spawn(function()
+	while task.wait(0.2) do
+		if AutoMining and SelectedRockName then
+			local rock = getRock()
+			if rock then
+				moveTo(rock.Position + Vector3.new(0,0,-3))
+				hitRock(rock)
+			end
+		end
+	end
 end)
